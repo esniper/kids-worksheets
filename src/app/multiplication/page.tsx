@@ -376,6 +376,8 @@ function TableRangeSlider({
         <SliderHandle
           leftPct={floorPct}
           value={floor}
+          valueMin={MIN_TABLE}
+          valueMax={MAX_TABLE}
           color="#ff3d6e"
           ariaLabel="Floor"
           onPointerDown={beginDrag("floor")}
@@ -387,6 +389,8 @@ function TableRangeSlider({
         <SliderHandle
           leftPct={splitPct}
           value={split}
+          valueMin={MIN_TABLE - 1}
+          valueMax={MAX_TABLE}
           color="#ffd23f"
           ariaLabel="Split"
           onPointerDown={beginDrag("split")}
@@ -398,6 +402,8 @@ function TableRangeSlider({
         <SliderHandle
           leftPct={ceilingPct}
           value={ceiling}
+          valueMin={MIN_TABLE}
+          valueMax={MAX_TABLE}
           color="#3aa5f0"
           ariaLabel="Ceiling"
           onPointerDown={beginDrag("ceiling")}
@@ -436,6 +442,8 @@ function TableRangeSlider({
 function SliderHandle({
   leftPct,
   value,
+  valueMin,
+  valueMax,
   color,
   ariaLabel,
   onPointerDown,
@@ -446,6 +454,8 @@ function SliderHandle({
 }: {
   leftPct: number;
   value: number;
+  valueMin: number;
+  valueMax: number;
   color: string;
   ariaLabel: string;
   onPointerDown: (e: React.PointerEvent) => void;
@@ -459,8 +469,8 @@ function SliderHandle({
       type="button"
       role="slider"
       aria-label={ariaLabel}
-      aria-valuemin={MIN_TABLE - 1}
-      aria-valuemax={MAX_TABLE}
+      aria-valuemin={valueMin}
+      aria-valuemax={valueMax}
       aria-valuenow={value}
       tabIndex={0}
       onPointerDown={onPointerDown}
