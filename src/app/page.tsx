@@ -1,113 +1,261 @@
-"use client";
+import Link from "next/link";
+import {
+  Confetti,
+  Mascot,
+  RainbowWord,
+  Burst,
+  Sparkle,
+  carnivalColors,
+} from "@/components/carnival";
 
-import { useEffect, useState } from "react";
+type Sheet = {
+  idx: string;
+  title: string;
+  blurb: string;
+  href?: string;
+  status: "ready" | "soon";
+  meta: string;
+};
 
-type Problem = { a: number; b: number };
+const sheets: Sheet[] = [
+  {
+    idx: "01",
+    title: "Multiplication",
+    blurb:
+      "Tables 2 through 20. Mix in-order drills with shuffled problems on tables they've mastered.",
+    href: "/multiplication",
+    status: "ready",
+    meta: "Two-step setup · printable",
+  },
+  {
+    idx: "02",
+    title: "Addition",
+    blurb:
+      "Single and double-digit sums. Carryover practice, with optional regrouping rows.",
+    status: "soon",
+    meta: "In the works",
+  },
+  {
+    idx: "03",
+    title: "Division",
+    blurb:
+      "Long division and fact families. Pairs neatly with the multiplication sheet.",
+    status: "soon",
+    meta: "In the works",
+  },
+  {
+    idx: "04",
+    title: "Fractions",
+    blurb: "Visual fractions, equivalents, and adding with common denominators.",
+    status: "soon",
+    meta: "Penciled in",
+  },
+];
 
-function buildProblems(): Problem[] {
-  const problems: Problem[] = [];
-  for (let a = 2; a <= 12; a++) {
-    for (let b = 1; b <= 12; b++) {
-      problems.push({ a, b });
-    }
-  }
-  return problems;
-}
-
-function shuffle<T>(items: T[]): T[] {
-  const copy = [...items];
-  for (let i = copy.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [copy[i], copy[j]] = [copy[j], copy[i]];
-  }
-  return copy;
-}
+const cardStyles: Record<
+  string,
+  { bg: string; ring: string; tilt: string; delay: string }
+> = {
+  "01": { bg: "#ff3d6e", ring: "#9b4dff", tilt: "-rotate-2", delay: "0s" },
+  "02": { bg: "#ffb627", ring: "#3aa5f0", tilt: "rotate-2", delay: "0.08s" },
+  "03": { bg: "#39c172", ring: "#ff6fb5", tilt: "-rotate-1", delay: "0.16s" },
+  "04": { bg: "#3aa5f0", ring: "#ffd23f", tilt: "rotate-3", delay: "0.24s" },
+};
 
 export default function Home() {
-  const [problems, setProblems] = useState<Problem[]>([]);
-
-  useEffect(() => {
-    setProblems(shuffle(buildProblems()));
-  }, []);
-
-  const reshuffle = () => setProblems(shuffle(buildProblems()));
-  const print = () => window.print();
-
-  const pageSize = 66;
-  const pages: Problem[][] = [];
-  for (let i = 0; i < problems.length; i += pageSize) {
-    pages.push(problems.slice(i, i + pageSize));
-  }
-
   return (
-    <div className="min-h-screen bg-white text-black">
-      <div className="mx-auto max-w-5xl px-6 py-8 print:max-w-none print:p-0">
-        <div className="mb-6 flex items-center justify-end gap-2 print:hidden">
-          <button
-            onClick={reshuffle}
-            className="rounded-md border border-zinc-300 bg-white px-3 py-1.5 text-sm font-medium text-zinc-800 hover:bg-zinc-50"
-          >
-            Shuffle
-          </button>
-          <button
-            onClick={print}
-            className="rounded-md bg-black px-3 py-1.5 text-sm font-medium text-white hover:bg-zinc-800"
-          >
-            Print
-          </button>
-        </div>
+    <main
+      className="relative min-h-screen overflow-hidden pb-32 pt-8"
+      style={{ backgroundColor: "#fff5dc" }}
+    >
+      <div
+        className="pointer-events-none absolute inset-0 opacity-25"
+        style={{
+          backgroundImage:
+            "radial-gradient(circle, #ff3d6e 1.6px, transparent 2px), radial-gradient(circle, #3aa5f0 1.6px, transparent 2px)",
+          backgroundSize: "44px 44px, 44px 44px",
+          backgroundPosition: "0 0, 22px 22px",
+        }}
+        aria-hidden
+      />
 
-        {pages.map((pageProblems, pageIdx) => (
-          <section
-            key={pageIdx}
-            className={`flex flex-col ${
-              pageIdx > 0 ? "mt-12 print:mt-0" : ""
-            } print:h-screen print:break-after-page print:last:break-after-auto`}
-          >
-            <header className="mb-4 flex items-end justify-between print:mb-3">
-              <div>
-                <h1 className="text-2xl font-bold tracking-tight print:text-xl">
-                  Multiplication Worksheet
-                </h1>
-                <p className="text-sm text-zinc-600 print:text-xs">
-                  Page {pageIdx + 1} of {pages.length} — {pageProblems.length} problems
-                </p>
-              </div>
-            </header>
+      <Confetti />
 
-            <div className="mb-5 grid grid-cols-2 gap-x-6 gap-y-2 text-sm print:mb-3 print:gap-y-1">
-              <div className="flex items-center gap-2">
-                <span className="font-medium">Name:</span>
-                <span className="flex-1 border-b border-zinc-400" />
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="font-medium">Date:</span>
-                <span className="flex-1 border-b border-zinc-400" />
-              </div>
+      <div className="relative mx-auto w-full max-w-5xl px-6 sm:px-10">
+        <header className="flex items-baseline justify-between">
+          <span
+            className="text-3xl"
+            style={{ fontFamily: "var(--font-bagel)", color: "#ff3d6e" }}
+          >
+            FOOLSCAP!
+          </span>
+          <span
+            className="rounded-full border-[3px] border-ink bg-paper px-4 py-1.5 text-sm font-bold uppercase tracking-wide text-ink shadow-[3px_3px_0_var(--ink)]"
+            style={{ fontFamily: "var(--font-bagel)" }}
+          >
+            Vol. 01
+          </span>
+        </header>
+
+        <section className="relative mt-20 sm:mt-28">
+          <Mascot className="absolute -right-2 top-2 hidden h-40 w-40 sm:block float-anim" />
+
+          <p
+            className="mb-6 inline-block -rotate-2 rounded-full border-[3px] border-ink bg-paper px-5 py-1.5 text-base font-bold uppercase tracking-wide text-ink shadow-[4px_4px_0_var(--ink)]"
+            style={{ fontFamily: "var(--font-bagel)" }}
+          >
+            ✨ Print &amp; play ✨
+          </p>
+
+          <h1
+            className="text-[clamp(3rem,11vw,8.5rem)] uppercase leading-[0.95] tracking-tight"
+            style={{ fontFamily: "var(--font-bagel)" }}
+          >
+            <span className="block">
+              <RainbowWord word="PICK" baseRot={-2} />
+            </span>
+            <span className="block">
+              <RainbowWord word="A" baseRot={3} startIndex={4} />
+            </span>
+            <span className="block">
+              <RainbowWord
+                word="WORKSHEET!"
+                baseRot={-1}
+                startIndex={5}
+                colors={carnivalColors}
+              />
+            </span>
+          </h1>
+
+          <p className="mt-8 max-w-xl text-lg font-semibold leading-snug text-ink">
+            A little library of practice sheets. Big chunky letters, lots of
+            color, and zero bugs — just printable pages your kid can actually
+            do with a pencil.
+          </p>
+        </section>
+
+        <section className="relative mt-24 sm:mt-32">
+          <div className="mb-10 flex items-baseline justify-between">
+            <h2
+              className="text-3xl uppercase"
+              style={{ fontFamily: "var(--font-bagel)", color: "#9b4dff" }}
+            >
+              The Sheets!
+            </h2>
+            <div
+              className="inline-flex items-center gap-2 rounded-full border-[3px] border-ink bg-paper px-3 py-1 text-sm font-bold uppercase tracking-wide shadow-[3px_3px_0_var(--ink)]"
+              style={{ fontFamily: "var(--font-bagel)" }}
+            >
+              <Sparkle className="h-4 w-4" style={{ color: "#ffb627" }} />
+              {sheets.filter((s) => s.status === "ready").length} of{" "}
+              {sheets.length}
             </div>
+          </div>
 
-            <ol className="grid flex-1 grid-cols-3 auto-rows-fr gap-x-6 text-base tabular-nums print:gap-x-4 print:text-base">
-              {pageProblems.map((p, i) => {
-                const globalIdx = pageIdx * pageSize + i + 1;
-                return (
-                  <li
-                    key={i}
-                    className="flex items-baseline gap-2 whitespace-nowrap"
-                  >
-                    <span className="w-7 shrink-0 text-right text-xs text-zinc-500">
-                      {globalIdx}.
-                    </span>
-                    <span className="font-medium">
-                      {p.a} × {p.b} =
-                    </span>
-                    <span className="inline-block w-20 border-b border-zinc-400 print:w-16" />
-                  </li>
-                );
-              })}
-            </ol>
-          </section>
-        ))}
+          <ul className="grid grid-cols-1 gap-6 sm:grid-cols-2 sm:gap-8">
+            {sheets.map((sheet) => (
+              <CrayonCard key={sheet.idx} sheet={sheet} />
+            ))}
+          </ul>
+        </section>
+
+        <footer className="mt-24 flex flex-wrap items-center justify-between gap-4">
+          <span
+            className="rounded-full border-[3px] border-ink bg-paper px-4 py-2 text-sm font-bold uppercase tracking-wide text-ink shadow-[3px_3px_0_var(--ink)]"
+            style={{ fontFamily: "var(--font-bagel)" }}
+          >
+            Print on letter · pencil ready ✏︎
+          </span>
+          <span
+            className="text-2xl"
+            style={{ fontFamily: "var(--font-bagel)", color: "#ff3d6e" }}
+          >
+            Yay!
+          </span>
+        </footer>
       </div>
+    </main>
+  );
+}
+
+function CrayonCard({ sheet }: { sheet: Sheet }) {
+  const s = cardStyles[sheet.idx] ?? cardStyles["01"];
+  const inner = (
+    <div
+      className={`pop-in relative border-[4px] border-ink p-6 shadow-[8px_8px_0_var(--ink)] transition-transform group-hover:-translate-y-1 group-hover:rotate-0 ${s.tilt}`}
+      style={
+        {
+          backgroundColor: s.bg,
+          ["--pop-rot" as string]: s.tilt.includes("-rotate-")
+            ? `-${s.tilt.replace(/[^\d]/g, "")}deg`
+            : `${s.tilt.replace(/[^\d]/g, "")}deg`,
+          animationDelay: s.delay,
+        } as React.CSSProperties
+      }
+    >
+      <span
+        className="absolute -left-[4px] -right-[4px] -top-[4px] block h-3 border-[4px] border-ink"
+        style={{ backgroundColor: s.ring }}
+        aria-hidden
+      />
+
+      <div className="flex items-start justify-between">
+        <span
+          className="text-4xl text-ink"
+          style={{ fontFamily: "var(--font-bagel)" }}
+        >
+          {sheet.idx}
+        </span>
+        {sheet.status === "ready" ? (
+          <Burst label="Ready!" color={s.ring} />
+        ) : (
+          <span
+            className="rotate-3 rounded-full border-[3px] border-ink bg-paper px-3 py-1 text-xs font-bold uppercase tracking-wide text-ink shadow-[2px_2px_0_var(--ink)]"
+            style={{ fontFamily: "var(--font-bagel)" }}
+          >
+            Soon
+          </span>
+        )}
+      </div>
+
+      <h3
+        className="mt-4 text-4xl uppercase leading-none tracking-tight text-ink sm:text-5xl"
+        style={{ fontFamily: "var(--font-bagel)" }}
+      >
+        {sheet.title}
+      </h3>
+      <p className="mt-3 text-[15px] font-semibold leading-snug text-ink">
+        {sheet.blurb}
+      </p>
+
+      {sheet.status === "ready" && (
+        <div className="mt-6 flex items-center justify-between">
+          <span
+            className="inline-flex items-center gap-2 rounded-full border-[3px] border-ink bg-paper px-3 py-1 text-xs font-bold uppercase tracking-wide text-ink shadow-[2px_2px_0_var(--ink)]"
+            style={{ fontFamily: "var(--font-bagel)" }}
+          >
+            {sheet.meta}
+          </span>
+          <span
+            className="text-3xl text-ink transition-transform group-hover:translate-x-1"
+            style={{ fontFamily: "var(--font-bagel)" }}
+            aria-hidden
+          >
+            →
+          </span>
+        </div>
+      )}
     </div>
   );
+
+  if (sheet.status === "ready" && sheet.href) {
+    return (
+      <li>
+        <Link href={sheet.href} className="group block">
+          {inner}
+        </Link>
+      </li>
+    );
+  }
+  return <li className="opacity-80">{inner}</li>;
 }
