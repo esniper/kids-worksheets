@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useRef, useState } from "react";
 import {
+  CarnivalHeading,
   Confetti,
   Sparkle,
   Star,
@@ -560,39 +561,6 @@ function Readout({
           : `${tables} ${tables === 1 ? "table" : "tables"} · ${problems} problems`}
       </p>
     </div>
-  );
-}
-
-function CarnivalHeading({
-  word,
-  colors,
-}: {
-  word: string;
-  colors: string[];
-}) {
-  return (
-    <>
-      {word.split("").map((ch, i) => {
-        if (ch === " ") return <span key={i}> </span>;
-        const rot = (i % 2 === 0 ? -2 : 3) + (i % 3 === 0 ? 1 : -1);
-        const color = colors[i % colors.length];
-        return (
-          <span
-            key={i}
-            className="inline-block"
-            style={{
-              transform: `rotate(${rot}deg) translateY(${(i % 2) * -3}px)`,
-              color,
-              textShadow:
-                "3px 3px 0 #1b1b1f, -1px -1px 0 #1b1b1f, 1px -1px 0 #1b1b1f, -1px 1px 0 #1b1b1f, 1px 1px 0 #1b1b1f",
-              marginRight: "-0.02em",
-            }}
-          >
-            {ch}
-          </span>
-        );
-      })}
-    </>
   );
 }
 
