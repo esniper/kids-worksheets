@@ -257,7 +257,7 @@ function TableRangeSlider({
     return MIN_TABLE - 0.5 + frac * SPAN;
   }, []);
 
-  const beginDrag = (which: Handle) => (e: React.PointerEvent) => {
+  const beginDrag = (which: Handle, e: React.PointerEvent) => {
     e.preventDefault();
     e.stopPropagation();
     draggingRef.current = which;
@@ -380,7 +380,7 @@ function TableRangeSlider({
           valueMax={MAX_TABLE}
           color="#ff3d6e"
           ariaLabel="Floor"
-          onPointerDown={beginDrag("floor")}
+          onPointerDown={(e) => beginDrag("floor", e)}
           onPointerMove={onMove}
           onPointerUp={endDrag}
           onPointerCancel={endDrag}
@@ -393,7 +393,7 @@ function TableRangeSlider({
           valueMax={MAX_TABLE}
           color="#ffd23f"
           ariaLabel="Split"
-          onPointerDown={beginDrag("split")}
+          onPointerDown={(e) => beginDrag("split", e)}
           onPointerMove={onMove}
           onPointerUp={endDrag}
           onPointerCancel={endDrag}
@@ -406,7 +406,7 @@ function TableRangeSlider({
           valueMax={MAX_TABLE}
           color="#3aa5f0"
           ariaLabel="Ceiling"
-          onPointerDown={beginDrag("ceiling")}
+          onPointerDown={(e) => beginDrag("ceiling", e)}
           onPointerMove={onMove}
           onPointerUp={endDrag}
           onPointerCancel={endDrag}
