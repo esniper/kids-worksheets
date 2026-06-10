@@ -47,6 +47,15 @@ const sheets: Sheet[] = [
   },
   {
     idx: "04",
+    title: "Mix It Up",
+    blurb:
+      "One sheet, every trick: shuffled speed-drill facts and big stacked numbers from the operations you pick.",
+    href: "/mix",
+    status: "ready",
+    meta: "Two-step setup · printable",
+  },
+  {
+    idx: "05",
     title: "Division",
     blurb:
       "Long division and fact families. Pairs neatly with the multiplication sheet.",
@@ -54,7 +63,7 @@ const sheets: Sheet[] = [
     meta: "In the works",
   },
   {
-    idx: "05",
+    idx: "06",
     title: "Fractions",
     blurb: "Visual fractions, equivalents, and adding with common denominators.",
     status: "soon",
@@ -69,8 +78,9 @@ const cardStyles: Record<
   "01": { bg: "#ff3d6e", ring: "#9b4dff", tilt: "-rotate-2", delay: "0s" },
   "02": { bg: "#ffb627", ring: "#3aa5f0", tilt: "rotate-2", delay: "0.08s" },
   "03": { bg: "#39c172", ring: "#ff6fb5", tilt: "-rotate-1", delay: "0.16s" },
-  "04": { bg: "#3aa5f0", ring: "#ffd23f", tilt: "rotate-3", delay: "0.24s" },
-  "05": { bg: "#9b4dff", ring: "#ffb627", tilt: "-rotate-2", delay: "0.32s" },
+  "04": { bg: "#9b4dff", ring: "#39c172", tilt: "rotate-1", delay: "0.24s" },
+  "05": { bg: "#3aa5f0", ring: "#ffd23f", tilt: "rotate-3", delay: "0.32s" },
+  "06": { bg: "#ff6fb5", ring: "#ffb627", tilt: "-rotate-2", delay: "0.4s" },
 };
 
 export default function Home() {
