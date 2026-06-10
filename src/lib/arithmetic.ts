@@ -14,18 +14,90 @@ export type BigNumbersOptions = {
   seed: number;
 };
 
-// Full fact-family pool: 81 facts, of which DRILL_COUNT are dealt out.
-// Addition: a + b with a, b in 1..9. Subtraction: the inverse facts,
-// (a + b) - b = a, so minuends reach 18 while subtrahend and answer
-// stay single-digit.
-export function buildDrill(op: Op, seed: number): ArithmeticProblem[] {
+// Full fact-family pool: 81 facts. Addition: a + b with a, b in 1..9.
+// Subtraction: the inverse facts, (a + b) - b = a, so minuends reach 18
+// while subtrahend and answer stay single-digit.
+function drillFacts(op: Op): ArithmeticProblem[] {
   const facts: ArithmeticProblem[] = [];
   for (let a = 1; a <= 9; a++) {
     for (let b = 1; b <= 9; b++) {
       facts.push(op === "add" ? { top: a, bottom: b } : { top: a + b, bottom: b });
     }
   }
-  return shuffle(facts, seed).slice(0, DRILL_COUNT);
+  return facts;
+}
+
+export function buildDrill(op: Op, seed: number): ArithmeticProblem[] {
+  return shuffle(drillFacts(op), seed).slice(0, DRILL_COUNT);
+}
+
+export type DrillOp = "add" | "sub" | "mul";
+export type TableRange = { from: number; to: number };
+export type MixedProblem<O extends string = DrillOp> = ArithmeticProblem & {
+  op: O;
+};
+export type MixedBigSpec = {
+  op: Op;
+  xDigits: number;
+  yDigits: number;
+  carry: CarryMode;
+};
+
+function mulFacts({ from, to }: TableRange): ArithmeticProblem[] {
+  const facts: ArithmeticProblem[] = [];
+  for (let a = from; a <= to; a++) {
+    for (let b = 1; b <= 12; b++) facts.push({ top: a, bottom: b });
+  }
+  return facts;
+}
+
+function evenShares(count: number, parts: number): number[] {
+  const base = Math.floor(count / parts);
+  return Array.from({ length: parts }, (_, i) => base + (i < count % parts ? 1 : 0));
+}
+
+// One mixed pile of drill facts: each op contributes an even share from its
+// own pool, then everything is shuffled together. A pool smaller than its
+// share is re-dealt so the sheet never comes up short.
+export function buildMixedDrill(
+  ops: DrillOp[],
+  count: number,
+  tables: TableRange,
+  seed: number,
+): MixedProblem[] {
+  const rand = mulberry32(seed);
+  const nextSeed = () => Math.floor(rand() * 2 ** 31);
+  const shares = evenShares(count, ops.length);
+  const combined: MixedProblem[] = [];
+  ops.forEach((op, i) => {
+    const pool = op === "mul" ? mulFacts(tables) : drillFacts(op);
+    const picked: ArithmeticProblem[] = [];
+    while (picked.length < shares[i]) {
+      picked.push(...shuffle(pool, nextSeed()).slice(0, shares[i] - picked.length));
+    }
+    combined.push(...picked.map((p) => ({ op, ...p })));
+  });
+  return shuffle(combined, nextSeed());
+}
+
+export function buildMixedBig(
+  specs: MixedBigSpec[],
+  count: number,
+  seed: number,
+): MixedProblem<Op>[] {
+  const rand = mulberry32(seed);
+  const nextSeed = () => Math.floor(rand() * 2 ** 31);
+  const shares = evenShares(count, specs.length);
+  const combined = specs.flatMap((spec, i) =>
+    buildBigNumbers(spec.op, {
+      xDigits: spec.xDigits,
+      yDigits: spec.yDigits,
+      carry: spec.carry,
+      count: shares[i],
+      seed: nextSeed(),
+    }).map((p) => ({ op: spec.op, ...p })),
+  );
+  return shuffle(combined, nextSeed());
 }
 
 export function buildBigNumbers(

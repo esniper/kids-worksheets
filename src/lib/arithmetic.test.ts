@@ -3,6 +3,8 @@ import {
   DRILL_COUNT,
   buildBigNumbers,
   buildDrill,
+  buildMixedBig,
+  buildMixedDrill,
   type ArithmeticProblem,
   type CarryMode,
 } from "./arithmetic";
@@ -224,5 +226,107 @@ describe("buildBigNumbers", () => {
     expect(build("add", 3, 2, "mix", 4)).not.toEqual(
       build("add", 3, 2, "mix", 5),
     );
+  });
+});
+
+describe("buildMixedDrill", () => {
+  const tables = { from: 2, to: 12 };
+
+  it("splits the count evenly across the enabled ops", () => {
+    const problems = buildMixedDrill(["add", "sub", "mul"], 24, tables, 1);
+    expect(problems).toHaveLength(24);
+    for (const op of ["add", "sub", "mul"] as const) {
+      expect(problems.filter((p) => p.op === op)).toHaveLength(8);
+    }
+  });
+
+  it("draws each op's facts from its own pool", () => {
+    for (const p of buildMixedDrill(["add", "sub", "mul"], 36, tables, 2)) {
+      if (p.op === "add") {
+        expect(p.top).toBeGreaterThanOrEqual(1);
+        expect(p.top).toBeLessThanOrEqual(9);
+        expect(p.bottom).toBeGreaterThanOrEqual(1);
+        expect(p.bottom).toBeLessThanOrEqual(9);
+      } else if (p.op === "sub") {
+        expect(p.top - p.bottom).toBeGreaterThanOrEqual(1);
+        expect(p.top - p.bottom).toBeLessThanOrEqual(9);
+        expect(p.bottom).toBeGreaterThanOrEqual(1);
+        expect(p.bottom).toBeLessThanOrEqual(9);
+      } else {
+        expect(p.top).toBeGreaterThanOrEqual(tables.from);
+        expect(p.top).toBeLessThanOrEqual(tables.to);
+        expect(p.bottom).toBeGreaterThanOrEqual(1);
+        expect(p.bottom).toBeLessThanOrEqual(12);
+      }
+    }
+  });
+
+  it("interleaves the ops rather than grouping them in blocks", () => {
+    const ops = buildMixedDrill(["add", "sub", "mul"], 36, tables, 3).map(
+      (p) => p.op,
+    );
+    // Grouped output would change op at most twice across the sheet.
+    const switches = ops.filter((op, i) => i > 0 && op !== ops[i - 1]).length;
+    expect(switches).toBeGreaterThan(2);
+  });
+
+  it("cycles a small multiplication pool instead of coming up short", () => {
+    const problems = buildMixedDrill(["mul"], 24, { from: 2, to: 2 }, 4);
+    expect(problems).toHaveLength(24);
+    for (const p of problems) {
+      expect(p.top).toBe(2);
+      expect(p.bottom).toBeGreaterThanOrEqual(1);
+      expect(p.bottom).toBeLessThanOrEqual(12);
+    }
+  });
+
+  it("is deterministic per seed and varies across seeds", () => {
+    expect(buildMixedDrill(["add", "mul"], 24, tables, 7)).toEqual(
+      buildMixedDrill(["add", "mul"], 24, tables, 7),
+    );
+    expect(buildMixedDrill(["add", "mul"], 24, tables, 7)).not.toEqual(
+      buildMixedDrill(["add", "mul"], 24, tables, 8),
+    );
+  });
+});
+
+describe("buildMixedBig", () => {
+  const specs = [
+    { op: "add" as const, xDigits: 2, yDigits: 1, carry: "mix" as const },
+    { op: "sub" as const, xDigits: 3, yDigits: 2, carry: "no" as const },
+  ];
+
+  it("splits the count evenly across the specs and tags each problem", () => {
+    const problems = buildMixedBig(specs, 20, 1);
+    expect(problems).toHaveLength(20);
+    expect(problems.filter((p) => p.op === "add")).toHaveLength(10);
+    expect(problems.filter((p) => p.op === "sub")).toHaveLength(10);
+  });
+
+  it("honors each op's own options", () => {
+    for (const p of buildMixedBig(specs, 30, 2)) {
+      if (p.op === "add") {
+        expect(
+          [digitCount(p.top), digitCount(p.bottom)].sort(),
+          `${p.top}+${p.bottom}`,
+        ).toEqual([1, 2]);
+      } else {
+        expect(digitCount(p.top)).toBe(3);
+        expect(digitCount(p.bottom)).toBe(2);
+        expect(hasBorrow(p.top, p.bottom), `${p.top}-${p.bottom}`).toBe(false);
+      }
+    }
+  });
+
+  it("shuffles the ops together rather than grouping them", () => {
+    const ops = buildMixedBig(specs, 20, 3).map((p) => p.op);
+    // Grouped output would change op at most once across the sheet.
+    const switches = ops.filter((op, i) => i > 0 && op !== ops[i - 1]).length;
+    expect(switches).toBeGreaterThan(1);
+  });
+
+  it("is deterministic per seed and varies across seeds", () => {
+    expect(buildMixedBig(specs, 12, 9)).toEqual(buildMixedBig(specs, 12, 9));
+    expect(buildMixedBig(specs, 12, 9)).not.toEqual(buildMixedBig(specs, 12, 10));
   });
 });
