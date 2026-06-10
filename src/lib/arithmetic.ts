@@ -40,13 +40,18 @@ export function buildBigNumbers(
   const rand = mulberry32(seed);
   const problems: ArithmeticProblem[] = [];
   const seen = new Set<string>();
+  // For addition the same fact in the opposite orientation is a duplicate.
+  const key = (p: ArithmeticProblem) =>
+    op === "add" && p.bottom > p.top
+      ? `${p.bottom},${p.top}`
+      : `${p.top},${p.bottom}`;
   while (problems.length < count) {
     let p = makeProblem(op, xDigits, yDigits, carry, rand);
     // Best-effort dedupe: bounded retries so small pools can't loop forever.
-    for (let tries = 0; seen.has(`${p.top},${p.bottom}`) && tries < 20; tries++) {
+    for (let tries = 0; seen.has(key(p)) && tries < 20; tries++) {
       p = makeProblem(op, xDigits, yDigits, carry, rand);
     }
-    seen.add(`${p.top},${p.bottom}`);
+    seen.add(key(p));
     problems.push(p);
   }
   return problems;
@@ -72,9 +77,16 @@ function makeProblem(
   carry: CarryMode,
   rand: () => number,
 ): ArithmeticProblem {
-  return op === "add"
-    ? makeAddition(xDigits, yDigits, carry, rand)
-    : makeSubtraction(xDigits, yDigits, carry, rand);
+  if (op === "sub") return makeSubtraction(xDigits, yDigits, carry, rand);
+  // Addition is commutative: the digit picks are unordered, and each problem
+  // randomly chooses which operand sits on top.
+  const p = makeAddition(
+    Math.max(xDigits, yDigits),
+    Math.min(xDigits, yDigits),
+    carry,
+    rand,
+  );
+  return rand() < 0.5 ? p : { top: p.bottom, bottom: p.top };
 }
 
 function makeAddition(

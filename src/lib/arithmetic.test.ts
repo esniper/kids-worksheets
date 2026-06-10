@@ -117,17 +117,55 @@ describe("buildBigNumbers", () => {
     expect(problems).toHaveLength(12);
   });
 
-  it("produces operands with the requested digit counts", () => {
-    for (const op of ["add", "sub"] as const) {
-      for (const [x, y] of digitCombos) {
-        for (const carry of carries) {
-          if (op === "sub" && carry === "yes" && x === 1 && y === 1) continue;
-          for (const p of build(op, x, y, carry)) {
-            expect(digitCount(p.top)).toBe(x);
-            expect(digitCount(p.bottom)).toBe(y);
-          }
+  it("subtraction operands have the requested digit counts", () => {
+    for (const [x, y] of digitCombos) {
+      for (const carry of carries) {
+        if (carry === "yes" && x === 1 && y === 1) continue;
+        for (const p of build("sub", x, y, carry)) {
+          expect(digitCount(p.top)).toBe(x);
+          expect(digitCount(p.bottom)).toBe(y);
         }
       }
+    }
+  });
+
+  it("addition operands have the requested digit counts in either order", () => {
+    for (const [x, y] of digitCombos) {
+      for (const carry of carries) {
+        for (const p of build("add", x, y, carry)) {
+          expect(
+            [digitCount(p.top), digitCount(p.bottom)].sort(),
+            `${p.top}+${p.bottom}`,
+          ).toEqual([y, x]);
+        }
+      }
+    }
+  });
+
+  it("addition treats xDigits and yDigits as interchangeable", () => {
+    for (const carry of carries) {
+      for (const p of build("add", 1, 3, carry)) {
+        expect(
+          [digitCount(p.top), digitCount(p.bottom)].sort(),
+          `${p.top}+${p.bottom}`,
+        ).toEqual([1, 3]);
+      }
+    }
+  });
+
+  it("addition mixes which operand sits on top when digit counts differ", () => {
+    const problems = build("add", 3, 1, "mix");
+    expect(problems.some((p) => digitCount(p.top) === 3)).toBe(true);
+    expect(problems.some((p) => digitCount(p.top) === 1)).toBe(true);
+  });
+
+  it("addition never repeats a fact in the opposite orientation", () => {
+    // Roomy pool, so best-effort dedupe should always have space to retry.
+    for (let seed = 1; seed <= 5; seed++) {
+      const unordered = build("add", 3, 2, "mix", seed).map((p) =>
+        [p.top, p.bottom].sort((a, b) => a - b).join(","),
+      );
+      expect(new Set(unordered).size).toBe(unordered.length);
     }
   });
 
