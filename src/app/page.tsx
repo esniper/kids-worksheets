@@ -31,12 +31,22 @@ const sheets: Sheet[] = [
     idx: "02",
     title: "Addition",
     blurb:
-      "Single and double-digit sums. Carryover practice, with optional regrouping rows.",
-    status: "soon",
-    meta: "In the works",
+      "Timed speed drills on the facts, or big stacked sums with or without carrying.",
+    href: "/addition",
+    status: "ready",
+    meta: "Two-step setup · printable",
   },
   {
     idx: "03",
+    title: "Subtraction",
+    blurb:
+      "Race-the-clock fact drills, or stacked take-aways with or without borrowing.",
+    href: "/subtraction",
+    status: "ready",
+    meta: "Two-step setup · printable",
+  },
+  {
+    idx: "04",
     title: "Division",
     blurb:
       "Long division and fact families. Pairs neatly with the multiplication sheet.",
@@ -44,7 +54,7 @@ const sheets: Sheet[] = [
     meta: "In the works",
   },
   {
-    idx: "04",
+    idx: "05",
     title: "Fractions",
     blurb: "Visual fractions, equivalents, and adding with common denominators.",
     status: "soon",
@@ -60,6 +70,7 @@ const cardStyles: Record<
   "02": { bg: "#ffb627", ring: "#3aa5f0", tilt: "rotate-2", delay: "0.08s" },
   "03": { bg: "#39c172", ring: "#ff6fb5", tilt: "-rotate-1", delay: "0.16s" },
   "04": { bg: "#3aa5f0", ring: "#ffd23f", tilt: "rotate-3", delay: "0.24s" },
+  "05": { bg: "#9b4dff", ring: "#ffb627", tilt: "-rotate-2", delay: "0.32s" },
 };
 
 export default function Home() {
