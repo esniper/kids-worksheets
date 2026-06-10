@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { Sparkle as CarnivalSparkle, Star } from "@/components/carnival";
+import { SheetHeader } from "@/components/sheet";
+import { shuffle } from "@/lib/random";
 
 type Range = { from: number; to: number };
 type Problem = { a: number; b: number };
@@ -17,29 +19,7 @@ function buildInOrder(range: Range): Problem[] {
 }
 
 function buildRandom(range: Range, seed: number): Problem[] {
-  const out: Problem[] = [];
-  for (let a = range.from; a <= range.to; a++) {
-    for (let b = 1; b <= 12; b++) out.push({ a, b });
-  }
-  return shuffle(out, seed);
-}
-
-function shuffle<T>(items: T[], seed: number): T[] {
-  // Mulberry32 PRNG, seeded so initial render is stable
-  let s = seed >>> 0;
-  const rand = () => {
-    s = (s + 0x6d2b79f5) >>> 0;
-    let t = s;
-    t = Math.imul(t ^ (t >>> 15), t | 1);
-    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-  };
-  const copy = [...items];
-  for (let i = copy.length - 1; i > 0; i--) {
-    const j = Math.floor(rand() * (i + 1));
-    [copy[i], copy[j]] = [copy[j], copy[i]];
-  }
-  return copy;
+  return shuffle(buildInOrder(range), seed);
 }
 
 function rangeLabel(r: Range): string {
@@ -233,50 +213,18 @@ export default function WorksheetView({
         <article className="mx-auto w-full max-w-5xl px-6 pb-24 pt-2 sm:px-10 print:max-w-none print:px-0 print:pb-0 print:pt-0">
           <div className="border-[4px] border-ink bg-paper p-6 text-ink shadow-[8px_8px_0_var(--ink)] print:border-0 print:bg-white print:p-0 print:text-black print:shadow-none">
           {/* Worksheet header — printed once */}
-          <div className="mb-6 border-[3px] border-ink print:border print:border-black">
-            <div className="flex items-stretch justify-between">
-              <div className="flex-1 px-5 py-4">
-                <p
-                  className="num-tag text-[10px] uppercase tracking-[0.22em] text-ink-soft print:text-black"
-                  style={{ letterSpacing: "0.22em" }}
-                >
-                  Foolscap · No. 01
-                </p>
-                <h2
-                  className="mt-1 text-3xl uppercase leading-tight tracking-tight sm:text-4xl print:font-[family-name:var(--font-fraunces)] print:normal-case"
-                  style={{ fontFamily: "var(--font-bagel)" }}
-                >
-                  Multiplication Worksheet
-                </h2>
-                <p className="num-tag mt-1 text-xs uppercase tracking-[0.16em] text-ink-soft print:text-black">
-                  {sections.map((s) => `${s.kind === "in-order" ? "In order" : "Random"}: ${s.label}`).join("  ·  ")}
-                </p>
-              </div>
-              <div className="grid w-72 shrink-0 grid-cols-1 divide-y divide-ink/40 border-l border-ink/40 text-xs print:border-black print:divide-black">
-                <div className="flex items-center gap-3 px-4 py-2">
-                  <span className="num-tag uppercase tracking-[0.18em] text-ink-soft print:text-black">
-                    Name
-                  </span>
-                  <span className="flex-1 border-b border-ink/70 print:border-black" />
-                </div>
-                <div className="flex items-center gap-3 px-4 py-2">
-                  <span className="num-tag uppercase tracking-[0.18em] text-ink-soft print:text-black">
-                    Date
-                  </span>
-                  <span className="flex-1 border-b border-ink/70 print:border-black" />
-                </div>
-                <div className="flex items-center gap-3 px-4 py-2">
-                  <span className="num-tag uppercase tracking-[0.18em] text-ink-soft print:text-black">
-                    Score
-                  </span>
-                  <span className="flex-1 border-b border-ink/70 print:border-black" />
-                  <span className="num-tag text-ink-soft print:text-black">
-                    / {totalProblems}
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
+          <SheetHeader
+            tag="Foolscap · No. 01"
+            title="Multiplication Worksheet"
+            meta={sections
+              .map((s) => `${s.kind === "in-order" ? "In order" : "Random"}: ${s.label}`)
+              .join("  ·  ")}
+            fields={[
+              { label: "Name" },
+              { label: "Date" },
+              { label: "Score", suffix: `/ ${totalProblems}` },
+            ]}
+          />
 
           {sections.map((section, sIdx) => (
             <SectionBlock
