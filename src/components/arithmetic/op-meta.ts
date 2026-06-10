@@ -14,6 +14,10 @@ export const OP_META: Record<
     carryWord: string;
     headingTop: string;
     headingBottom: string;
+    // Labels for the two big-number digit pickers. Addition is commutative,
+    // so its operands aren't tied to a stacking position.
+    xLabel: string;
+    yLabel: string;
   }
 > = {
   add: {
@@ -26,6 +30,8 @@ export const OP_META: Record<
     carryWord: "carrying",
     headingTop: "ADD",
     headingBottom: "THEM UP!",
+    xLabel: "First number",
+    yLabel: "Second number",
   },
   sub: {
     slug: "subtraction",
@@ -37,5 +43,7 @@ export const OP_META: Record<
     carryWord: "borrowing",
     headingTop: "TAKE",
     headingBottom: "THEM AWAY!",
+    xLabel: "Top number",
+    yLabel: "Bottom number",
   },
 };

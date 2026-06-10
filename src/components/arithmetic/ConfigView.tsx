@@ -38,9 +38,12 @@ export default function ArithmeticConfigView({ op }: { op: Op }) {
 
   const pickXDigits = (x: number) => {
     setXDigits(x);
-    if (yDigits > x) setYDigits(x);
-    // x = 1 forces y = 1, where forced borrowing is impossible
-    if (op === "sub" && carry === "yes" && x === 1) setCarry("mix");
+    if (op === "sub") {
+      // Subtraction keeps the wider number on top so answers stay positive.
+      if (yDigits > x) setYDigits(x);
+      // x = 1 forces y = 1, where forced borrowing is impossible
+      if (carry === "yes" && x === 1) setCarry("mix");
+    }
   };
 
   const total = mode === "drill" ? 60 : count;
@@ -144,7 +147,7 @@ export default function ArithmeticConfigView({ op }: { op: Op }) {
 
           {mode === "big" && (
             <div className="mt-8 border-[4px] border-ink bg-paper p-5 shadow-[6px_6px_0_var(--ink)] sm:p-6">
-              <OptionRow label="Top number">
+              <OptionRow label={meta.xLabel}>
                 {[1, 2, 3].map((d) => (
                   <Choice
                     key={d}
@@ -156,12 +159,12 @@ export default function ArithmeticConfigView({ op }: { op: Op }) {
                   </Choice>
                 ))}
               </OptionRow>
-              <OptionRow label="Bottom number">
+              <OptionRow label={meta.yLabel}>
                 {[1, 2, 3].map((d) => (
                   <Choice
                     key={d}
                     selected={yDigits === d}
-                    disabled={d > xDigits}
+                    disabled={op === "sub" && d > xDigits}
                     onClick={() => {
                       setYDigits(d);
                       if (op === "sub" && carry === "yes" && xDigits === 1 && d === 1) {
