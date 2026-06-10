@@ -25,7 +25,7 @@ describe("parseWorksheetParams", () => {
     ).toEqual({ mode: "big", xDigits: 3, yDigits: 2, carry: "no", count: 30 });
   });
 
-  it("clamps digits to 1-3 and keeps bottom <= top", () => {
+  it("clamps digits to 1-3", () => {
     expect(
       parseWorksheetParams("add", {
         mode: "big",
@@ -35,6 +35,21 @@ describe("parseWorksheetParams", () => {
         count: "20",
       }),
     ).toEqual({ mode: "big", xDigits: 3, yDigits: 1, carry: "mix", count: 20 });
+  });
+
+  it("keeps bottom <= top for subtraction", () => {
+    expect(
+      parseWorksheetParams("sub", {
+        mode: "big",
+        x: "1",
+        y: "3",
+        carry: "mix",
+        count: "20",
+      }),
+    ).toEqual({ mode: "big", xDigits: 1, yDigits: 1, carry: "mix", count: 20 });
+  });
+
+  it("allows bottom > top for addition since order is interchangeable", () => {
     expect(
       parseWorksheetParams("add", {
         mode: "big",
@@ -43,7 +58,7 @@ describe("parseWorksheetParams", () => {
         carry: "mix",
         count: "20",
       }),
-    ).toEqual({ mode: "big", xDigits: 1, yDigits: 1, carry: "mix", count: 20 });
+    ).toEqual({ mode: "big", xDigits: 1, yDigits: 3, carry: "mix", count: 20 });
   });
 
   it("falls back to defaults for missing or junk values", () => {

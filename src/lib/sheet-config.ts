@@ -29,7 +29,12 @@ export function parseWorksheetParams(
   if (sp.mode !== "big") return null;
 
   const xDigits = parseDigits(sp.x, 2);
-  const yDigits = Math.min(parseDigits(sp.y, 1), xDigits);
+  // Addition is commutative, so the digit picks are unordered; subtraction
+  // needs the wider operand on top to keep answers non-negative.
+  const yDigits =
+    op === "add"
+      ? parseDigits(sp.y, 1)
+      : Math.min(parseDigits(sp.y, 1), xDigits);
   let carry: CarryMode =
     sp.carry === "no" || sp.carry === "yes" || sp.carry === "mix"
       ? sp.carry
