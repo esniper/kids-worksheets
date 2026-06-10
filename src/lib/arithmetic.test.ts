@@ -1,0 +1,190 @@
+import { describe, expect, it } from "vitest";
+import {
+  DRILL_COUNT,
+  buildBigNumbers,
+  buildDrill,
+  type ArithmeticProblem,
+  type CarryMode,
+} from "./arithmetic";
+
+// Independent re-implementations of the column arithmetic, so the tests
+// don't trust the module's own helpers.
+function hasCarry(top: number, bottom: number): boolean {
+  let t = top;
+  let b = bottom;
+  let carry = 0;
+  while (t > 0 || b > 0) {
+    const s = (t % 10) + (b % 10) + carry;
+    if (s > 9) return true;
+    carry = 0;
+    t = Math.floor(t / 10);
+    b = Math.floor(b / 10);
+  }
+  return false;
+}
+
+function hasBorrow(top: number, bottom: number): boolean {
+  let t = top;
+  let b = bottom;
+  let borrow = 0;
+  while (b > 0 || borrow > 0) {
+    const d = (t % 10) - borrow - (b % 10);
+    if (d < 0) return true;
+    borrow = 0;
+    t = Math.floor(t / 10);
+    b = Math.floor(b / 10);
+  }
+  return false;
+}
+
+function digitCount(n: number): number {
+  return String(n).length;
+}
+
+function key(p: ArithmeticProblem): string {
+  return `${p.top},${p.bottom}`;
+}
+
+describe("buildDrill", () => {
+  it("addition: 60 distinct facts with operands 1-9", () => {
+    const problems = buildDrill("add", 5);
+    expect(problems).toHaveLength(DRILL_COUNT);
+    expect(new Set(problems.map(key)).size).toBe(DRILL_COUNT);
+    for (const p of problems) {
+      expect(p.top).toBeGreaterThanOrEqual(1);
+      expect(p.top).toBeLessThanOrEqual(9);
+      expect(p.bottom).toBeGreaterThanOrEqual(1);
+      expect(p.bottom).toBeLessThanOrEqual(9);
+    }
+  });
+
+  it("subtraction: 60 distinct facts, minuend to 18, single-digit subtrahend and answer", () => {
+    const problems = buildDrill("sub", 5);
+    expect(problems).toHaveLength(DRILL_COUNT);
+    expect(new Set(problems.map(key)).size).toBe(DRILL_COUNT);
+    for (const p of problems) {
+      expect(p.top).toBeGreaterThanOrEqual(2);
+      expect(p.top).toBeLessThanOrEqual(18);
+      expect(p.bottom).toBeGreaterThanOrEqual(1);
+      expect(p.bottom).toBeLessThanOrEqual(9);
+      const answer = p.top - p.bottom;
+      expect(answer).toBeGreaterThanOrEqual(1);
+      expect(answer).toBeLessThanOrEqual(9);
+    }
+  });
+
+  it("is deterministic per seed and varies across seeds", () => {
+    expect(buildDrill("add", 9)).toEqual(buildDrill("add", 9));
+    expect(buildDrill("add", 9)).not.toEqual(buildDrill("add", 10));
+  });
+});
+
+describe("buildBigNumbers", () => {
+  const digitCombos: Array<[number, number]> = [
+    [1, 1],
+    [2, 1],
+    [2, 2],
+    [3, 1],
+    [3, 2],
+    [3, 3],
+  ];
+  const carries: CarryMode[] = ["no", "yes", "mix"];
+
+  function build(
+    op: "add" | "sub",
+    x: number,
+    y: number,
+    carry: CarryMode,
+    seed = 1,
+  ) {
+    return buildBigNumbers(op, {
+      xDigits: x,
+      yDigits: y,
+      carry,
+      count: 30,
+      seed,
+    });
+  }
+
+  it("respects the requested count", () => {
+    const problems = buildBigNumbers("add", {
+      xDigits: 2,
+      yDigits: 2,
+      carry: "mix",
+      count: 12,
+      seed: 3,
+    });
+    expect(problems).toHaveLength(12);
+  });
+
+  it("produces operands with the requested digit counts", () => {
+    for (const op of ["add", "sub"] as const) {
+      for (const [x, y] of digitCombos) {
+        for (const carry of carries) {
+          if (op === "sub" && carry === "yes" && x === 1 && y === 1) continue;
+          for (const p of build(op, x, y, carry)) {
+            expect(digitCount(p.top)).toBe(x);
+            expect(digitCount(p.bottom)).toBe(y);
+          }
+        }
+      }
+    }
+  });
+
+  it("addition with carry='no' never carries", () => {
+    for (const [x, y] of digitCombos) {
+      for (const p of build("add", x, y, "no")) {
+        expect(hasCarry(p.top, p.bottom), `${p.top}+${p.bottom}`).toBe(false);
+      }
+    }
+  });
+
+  it("addition with carry='yes' always carries", () => {
+    for (const [x, y] of digitCombos) {
+      for (const p of build("add", x, y, "yes")) {
+        expect(hasCarry(p.top, p.bottom), `${p.top}+${p.bottom}`).toBe(true);
+      }
+    }
+  });
+
+  it("subtraction never goes negative in any mode", () => {
+    for (const [x, y] of digitCombos) {
+      for (const carry of carries) {
+        if (carry === "yes" && x === 1 && y === 1) continue;
+        for (let seed = 1; seed <= 5; seed++) {
+          for (const p of build("sub", x, y, carry, seed)) {
+            expect(p.top).toBeGreaterThanOrEqual(p.bottom);
+          }
+        }
+      }
+    }
+  });
+
+  it("subtraction with carry='no' never borrows", () => {
+    for (const [x, y] of digitCombos) {
+      for (const p of build("sub", x, y, "no")) {
+        expect(hasBorrow(p.top, p.bottom), `${p.top}-${p.bottom}`).toBe(false);
+      }
+    }
+  });
+
+  it("subtraction with carry='yes' always borrows", () => {
+    for (const [x, y] of digitCombos) {
+      if (x === 1 && y === 1) continue;
+      for (const p of build("sub", x, y, "yes")) {
+        expect(hasBorrow(p.top, p.bottom), `${p.top}-${p.bottom}`).toBe(true);
+      }
+    }
+  });
+
+  it("throws for single-digit subtraction with forced borrowing", () => {
+    expect(() => build("sub", 1, 1, "yes")).toThrow();
+  });
+
+  it("is deterministic per seed and varies across seeds", () => {
+    expect(build("add", 3, 2, "mix", 4)).toEqual(build("add", 3, 2, "mix", 4));
+    expect(build("add", 3, 2, "mix", 4)).not.toEqual(
+      build("add", 3, 2, "mix", 5),
+    );
+  });
+});
