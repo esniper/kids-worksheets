@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   DRILL_COUNT,
+  answerFor,
   buildBigNumbers,
   buildDrill,
   buildMixedBig,
@@ -41,6 +42,13 @@ function hasBorrow(top: number, bottom: number): boolean {
 
 function digitCount(n: number): number {
   return String(n).length;
+}
+
+// Multiplication regroups when any single top-digit × bottom-digit reaches 10.
+function hasMulRegroup(top: number, bottom: number): boolean {
+  const topDigits = String(top).split("").map(Number);
+  const bottomDigits = String(bottom).split("").map(Number);
+  return topDigits.some((t) => bottomDigits.some((b) => t * b >= 10));
 }
 
 function key(p: ArithmeticProblem): string {
@@ -229,6 +237,81 @@ describe("buildBigNumbers", () => {
   });
 });
 
+describe("buildBigNumbers multiplication", () => {
+  const digitCombos: Array<[number, number]> = [
+    [1, 1],
+    [2, 1],
+    [1, 2],
+    [2, 2],
+    [3, 2],
+    [4, 1],
+    [4, 3],
+    [4, 4],
+  ];
+  const modes: CarryMode[] = ["no", "yes", "mix"];
+
+  function build(x: number, y: number, regroup: CarryMode, seed = 1) {
+    return buildBigNumbers("mul", {
+      xDigits: x,
+      yDigits: y,
+      carry: regroup,
+      count: 30,
+      seed,
+    });
+  }
+
+  it("operands have the requested digit counts, top × bottom (no swap)", () => {
+    for (const [x, y] of digitCombos) {
+      for (const mode of modes) {
+        for (const p of build(x, y, mode)) {
+          expect(digitCount(p.top), `${p.top}×${p.bottom}`).toBe(x);
+          expect(digitCount(p.bottom), `${p.top}×${p.bottom}`).toBe(y);
+        }
+      }
+    }
+  });
+
+  it("regroup='no' never regroups", () => {
+    for (const [x, y] of digitCombos) {
+      for (const p of build(x, y, "no")) {
+        expect(hasMulRegroup(p.top, p.bottom), `${p.top}×${p.bottom}`).toBe(
+          false,
+        );
+      }
+    }
+  });
+
+  it("regroup='yes' always regroups", () => {
+    for (const [x, y] of digitCombos) {
+      for (const p of build(x, y, "yes")) {
+        expect(hasMulRegroup(p.top, p.bottom), `${p.top}×${p.bottom}`).toBe(
+          true,
+        );
+      }
+    }
+  });
+
+  it("single-digit × single-digit forced regroup does not throw", () => {
+    expect(() => build(1, 1, "yes")).not.toThrow();
+    for (const p of build(1, 1, "yes")) {
+      expect(p.top * p.bottom).toBeGreaterThanOrEqual(10);
+    }
+  });
+
+  it("is deterministic per seed and varies across seeds", () => {
+    expect(build(3, 2, "mix", 4)).toEqual(build(3, 2, "mix", 4));
+    expect(build(3, 2, "mix", 4)).not.toEqual(build(3, 2, "mix", 5));
+  });
+});
+
+describe("answerFor", () => {
+  it("computes the result for each operation", () => {
+    expect(answerFor("add", { top: 27, bottom: 15 })).toBe(42);
+    expect(answerFor("sub", { top: 50, bottom: 8 })).toBe(42);
+    expect(answerFor("mul", { top: 6, bottom: 7 })).toBe(42);
+  });
+});
+
 describe("buildMixedDrill", () => {
   const tables = { from: 2, to: 12 };
 
@@ -328,5 +411,21 @@ describe("buildMixedBig", () => {
   it("is deterministic per seed and varies across seeds", () => {
     expect(buildMixedBig(specs, 12, 9)).toEqual(buildMixedBig(specs, 12, 9));
     expect(buildMixedBig(specs, 12, 9)).not.toEqual(buildMixedBig(specs, 12, 10));
+  });
+
+  it("supports a multiplication spec alongside add/sub", () => {
+    const withMul = [
+      ...specs,
+      { op: "mul" as const, xDigits: 3, yDigits: 2, carry: "yes" as const },
+    ];
+    const problems = buildMixedBig(withMul, 30, 5);
+    expect(problems).toHaveLength(30);
+    const muls = problems.filter((p) => p.op === "mul");
+    expect(muls).toHaveLength(10);
+    for (const p of muls) {
+      expect(digitCount(p.top)).toBe(3);
+      expect(digitCount(p.bottom)).toBe(2);
+      expect(hasMulRegroup(p.top, p.bottom), `${p.top}×${p.bottom}`).toBe(true);
+    }
   });
 });

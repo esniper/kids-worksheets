@@ -1,6 +1,9 @@
 import { mulberry32, shuffle } from "./random";
 
 export type Op = "add" | "sub";
+// Big-number operations. Multiplication is mix-only (no standalone page), so it
+// lives here rather than widening Op, which still gates the add/sub pages.
+export type BigOp = "add" | "sub" | "mul";
 export type CarryMode = "no" | "yes" | "mix";
 export type ArithmeticProblem = { top: number; bottom: number };
 
@@ -37,11 +40,19 @@ export type MixedProblem<O extends string = DrillOp> = ArithmeticProblem & {
   op: O;
 };
 export type MixedBigSpec = {
-  op: Op;
+  op: BigOp;
   xDigits: number;
   yDigits: number;
   carry: CarryMode;
 };
+
+// The answer to a problem, given its operation. For multiplication the carry
+// field means regrouping, but the answer is just the product either way.
+export function answerFor(op: BigOp, { top, bottom }: ArithmeticProblem): number {
+  if (op === "add") return top + bottom;
+  if (op === "sub") return top - bottom;
+  return top * bottom;
+}
 
 function mulFacts({ from, to }: TableRange): ArithmeticProblem[] {
   const facts: ArithmeticProblem[] = [];
@@ -84,7 +95,7 @@ export function buildMixedBig(
   specs: MixedBigSpec[],
   count: number,
   seed: number,
-): MixedProblem<Op>[] {
+): MixedProblem<BigOp>[] {
   const rand = mulberry32(seed);
   const nextSeed = () => Math.floor(rand() * 2 ** 31);
   const shares = evenShares(count, specs.length);
@@ -101,7 +112,7 @@ export function buildMixedBig(
 }
 
 export function buildBigNumbers(
-  op: Op,
+  op: BigOp,
   { xDigits, yDigits, carry, count, seed }: BigNumbersOptions,
 ): ArithmeticProblem[] {
   if (op === "sub" && carry === "yes" && xDigits === 1 && yDigits === 1) {
@@ -143,12 +154,13 @@ function fromDigits(digits: number[]): number {
 // Problems are built column-by-column so carry/borrow constraints hold by
 // construction — no rejection loops that could spin on tight cases.
 function makeProblem(
-  op: Op,
+  op: BigOp,
   xDigits: number,
   yDigits: number,
   carry: CarryMode,
   rand: () => number,
 ): ArithmeticProblem {
+  if (op === "mul") return makeMultiplication(xDigits, yDigits, carry, rand);
   if (op === "sub") return makeSubtraction(xDigits, yDigits, carry, rand);
   // Addition is commutative: the digit picks are unordered, and each problem
   // randomly chooses which operand sits on top.
@@ -251,4 +263,53 @@ function makeSubtraction(
   const top = randInt(rand, xDigits === 1 ? 1 : 10 ** (xDigits - 1), 10 ** xDigits - 1);
   const bottom = randInt(rand, yDigits === 1 ? 1 : 10 ** (yDigits - 1), 10 ** yDigits - 1);
   return top >= bottom ? { top, bottom } : { top: bottom, bottom: top };
+}
+
+// Random digit array (index 0 is the ones column); the leading digit is never
+// zero so the number really has the requested width.
+function randomDigits(n: number, rand: () => number): number[] {
+  return Array.from({ length: n }, (_, i) =>
+    randInt(rand, i === n - 1 ? 1 : 0, 9),
+  );
+}
+
+// Like randomDigits but every digit is capped at `cap` (cap >= 1), used so that
+// each digit's product with a capped partner can never reach 10.
+function cappedDigits(n: number, cap: number, rand: () => number): number[] {
+  return Array.from({ length: n }, (_, i) =>
+    randInt(rand, i === n - 1 ? 1 : 0, cap),
+  );
+}
+
+// Multiplication, with `regroup` playing the carry role:
+//   "no"  — every top-digit × bottom-digit product stays <= 9 (no carrying)
+//   "yes" — at least one such product reaches 10 (a carry is forced)
+//   "mix" — unconstrained digits
+// Built by construction so there are no rejection loops on tight cases.
+function makeMultiplication(
+  xDigits: number,
+  yDigits: number,
+  regroup: CarryMode,
+  rand: () => number,
+): ArithmeticProblem {
+  if (regroup === "no") {
+    // Cap the two operands so the largest possible per-digit product is <= 9.
+    const bottomCap = randInt(rand, 1, 9);
+    const topCap = Math.floor(9 / bottomCap); // always >= 1
+    return {
+      top: fromDigits(cappedDigits(xDigits, topCap, rand)),
+      bottom: fromDigits(cappedDigits(yDigits, bottomCap, rand)),
+    };
+  }
+
+  const t = randomDigits(xDigits, rand);
+  const b = randomDigits(yDigits, rand);
+  if (regroup === "yes") {
+    // Force one column pair to multiply to at least 10 (1 × n can never carry,
+    // so the top factor is >= 2). Leading digits stay non-zero either way.
+    const ti = randInt(rand, 2, 9);
+    t[randInt(rand, 0, xDigits - 1)] = ti;
+    b[randInt(rand, 0, yDigits - 1)] = randInt(rand, Math.ceil(10 / ti), 9);
+  }
+  return { top: fromDigits(t), bottom: fromDigits(b) };
 }
