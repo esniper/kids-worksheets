@@ -2,6 +2,11 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
+import {
+  AnswerKey,
+  KeyToggle,
+  type KeySection,
+} from "@/components/arithmetic/AnswerKey";
 import { Sparkle as CarnivalSparkle, Star } from "@/components/carnival";
 import { SheetHeader } from "@/components/sheet";
 import { shuffle } from "@/lib/random";
@@ -36,6 +41,7 @@ export default function WorksheetView({
   // Seed only matters for random; default to a fixed value so SSR == first client render,
   // then swap to a random seed after mount so each visit gets a fresh shuffle.
   const [seed, setSeed] = useState<number>(1);
+  const [showKey, setShowKey] = useState(false);
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -62,6 +68,20 @@ export default function WorksheetView({
   }, [inOrder, random, seed]);
 
   const totalProblems = sections.reduce((n, s) => n + s.problems.length, 0);
+
+  // Mirror the worksheet's continuous numbering across sections.
+  let keyRunning = 1;
+  const keySections: KeySection[] = sections.map((section) => {
+    const entries = section.problems.map((p, i) => ({
+      n: keyRunning + i,
+      answer: p.a * p.b,
+    }));
+    keyRunning += section.problems.length;
+    return {
+      title: `${section.kind === "random" ? "Random" : "In order"} · ${section.label}`,
+      entries,
+    };
+  });
 
   if (sections.length === 0) {
     return (
@@ -157,6 +177,7 @@ export default function WorksheetView({
               </div>
 
               <div className="flex items-center gap-3">
+                <KeyToggle on={showKey} onToggle={() => setShowKey((v) => !v)} />
                 {random && (
                   <button
                     type="button"
@@ -237,6 +258,8 @@ export default function WorksheetView({
               }
             />
           ))}
+
+          {showKey && <AnswerKey sections={keySections} />}
           </div>
         </article>
       </div>

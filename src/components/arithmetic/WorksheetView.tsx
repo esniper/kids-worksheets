@@ -3,10 +3,12 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { Sparkle as CarnivalSparkle, Star } from "@/components/carnival";
+import { AnswerKey, KeyToggle } from "@/components/arithmetic/AnswerKey";
 import { DrillGrid, StackedGrid } from "@/components/arithmetic/grids";
 import { SheetHeader, type SheetField } from "@/components/sheet";
 import {
   DRILL_COUNT,
+  answerFor,
   buildBigNumbers,
   buildDrill,
   type ArithmeticProblem,
@@ -33,6 +35,7 @@ export default function ArithmeticWorksheetView({
 
   // Fixed seed so SSR == first client render, then a fresh shuffle per visit.
   const [seed, setSeed] = useState<number>(1);
+  const [showKey, setShowKey] = useState(false);
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setSeed(Math.floor(Math.random() * 2 ** 31));
@@ -159,6 +162,7 @@ export default function ArithmeticWorksheetView({
               </div>
 
               <div className="flex items-center gap-3">
+                <KeyToggle on={showKey} onToggle={() => setShowKey((v) => !v)} />
                 <button
                   type="button"
                   onClick={() => setSeed(Math.floor(Math.random() * 2 ** 31))}
@@ -215,6 +219,19 @@ export default function ArithmeticWorksheetView({
               <DrillGrid problems={gridProblems} />
             ) : (
               <StackedGrid problems={gridProblems} />
+            )}
+
+            {showKey && (
+              <AnswerKey
+                sections={[
+                  {
+                    entries: problems.map((p, i) => ({
+                      n: i + 1,
+                      answer: answerFor(op, p),
+                    })),
+                  },
+                ]}
+              />
             )}
           </div>
         </article>

@@ -3,9 +3,15 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { Sparkle as CarnivalSparkle, Star } from "@/components/carnival";
-import { DrillGrid, StackedGrid, type GridProblem } from "@/components/arithmetic/grids";
+import {
+  AnswerKey,
+  KeyToggle,
+  type KeySection,
+} from "@/components/arithmetic/AnswerKey";
+import { DrillGrid, StackedGrid } from "@/components/arithmetic/grids";
 import { SheetHeader, type SheetField } from "@/components/sheet";
 import {
+  answerFor,
   buildMixedBig,
   buildMixedDrill,
   type DrillOp,
@@ -26,11 +32,14 @@ export default function MixWorksheetView({
 }) {
   // Fixed seed so SSR == first client render, then a fresh shuffle per visit.
   const [seed, setSeed] = useState<number>(1);
+  const [showKey, setShowKey] = useState(false);
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setSeed(Math.floor(Math.random() * 2 ** 31));
   }, []);
 
+  // Each problem keeps its op so the answer key can compute the right result;
+  // the grids only read top/bottom/symbol and ignore the extra field.
   const { drillProblems, bigProblems } = useMemo(() => {
     if (!config) return { drillProblems: [], bigProblems: [] };
     return {
@@ -40,15 +49,35 @@ export default function MixWorksheetView({
             config.drill.count,
             config.drill.tables,
             seed,
-          ).map((p): GridProblem => ({ ...p, symbol: SYMBOLS[p.op] }))
+          ).map((p) => ({ ...p, symbol: SYMBOLS[p.op] }))
         : [],
       bigProblems: config.big
         ? buildMixedBig(config.big.specs, config.big.count, seed + 1).map(
-            (p): GridProblem => ({ ...p, symbol: SYMBOLS[p.op] }),
+            (p) => ({ ...p, symbol: SYMBOLS[p.op] }),
           )
         : [],
     };
   }, [config, seed]);
+
+  const keySections: KeySection[] = [];
+  if (drillProblems.length > 0) {
+    keySections.push({
+      title: "Speed Drill",
+      entries: drillProblems.map((p, i) => ({
+        n: i + 1,
+        answer: answerFor(p.op, p),
+      })),
+    });
+  }
+  if (bigProblems.length > 0) {
+    keySections.push({
+      title: "Big Numbers",
+      entries: bigProblems.map((p, i) => ({
+        n: drillProblems.length + i + 1,
+        answer: answerFor(p.op, p),
+      })),
+    });
+  }
 
   if (!config) {
     return (
@@ -164,6 +193,7 @@ export default function MixWorksheetView({
               </div>
 
               <div className="flex items-center gap-3">
+                <KeyToggle on={showKey} onToggle={() => setShowKey((v) => !v)} />
                 <button
                   type="button"
                   onClick={() => setSeed(Math.floor(Math.random() * 2 ** 31))}
@@ -236,6 +266,8 @@ export default function MixWorksheetView({
                 />
               </MixSection>
             )}
+
+            {showKey && <AnswerKey sections={keySections} />}
           </div>
         </article>
       </div>
