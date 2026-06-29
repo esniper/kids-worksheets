@@ -107,7 +107,7 @@ describe("parseMixParams", () => {
   it("returns null when no section has any ops", () => {
     expect(parseMixParams({})).toBeNull();
     expect(parseMixParams({ drill: "", big: "" })).toBeNull();
-    expect(parseMixParams({ drill: "division", big: "mul" })).toBeNull();
+    expect(parseMixParams({ drill: "division", big: "division" })).toBeNull();
   });
 
   it("parses a full mix config", () => {
@@ -154,10 +154,27 @@ describe("parseMixParams", () => {
       "add",
       "mul",
     ]);
-    expect(parseMixParams({ big: "sub,add,mul" })?.big?.specs.map((s) => s.op)).toEqual([
-      "add",
-      "sub",
+    expect(
+      parseMixParams({ big: "mul,sub,add,division" })?.big?.specs.map(
+        (s) => s.op,
+      ),
+    ).toEqual(["add", "sub", "mul"]);
+  });
+
+  it("parses a multiplication big spec with its own params and 1-4 digit range", () => {
+    const config = parseMixParams({
+      big: "mul",
+      mx: "4",
+      my: "2",
+      mregroup: "no",
+    });
+    expect(config?.big?.specs).toEqual([
+      { op: "mul", xDigits: 4, yDigits: 2, carry: "no" },
     ]);
+    // multiplication keeps the operands as configured (no swap) and clamps to 4
+    expect(
+      parseMixParams({ big: "mul", mx: "9", my: "0" })?.big?.specs[0],
+    ).toEqual({ op: "mul", xDigits: 4, yDigits: 1, carry: "mix" });
   });
 
   it("clamps the table range to 2-12 and orders it", () => {

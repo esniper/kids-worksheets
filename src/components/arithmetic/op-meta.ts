@@ -1,9 +1,10 @@
-import type { Op } from "@/lib/arithmetic";
+import type { BigOp } from "@/lib/arithmetic";
 
 // Everything that distinguishes the addition pages from the subtraction
-// pages lives here; the components themselves are op-agnostic.
+// pages lives here; the components themselves are op-agnostic. Multiplication
+// is mix-only (Big Numbers section), so its slug/sheetNo/headings go unused.
 export const OP_META: Record<
-  Op,
+  BigOp,
   {
     slug: string;
     name: string;
@@ -43,6 +44,19 @@ export const OP_META: Record<
     carryWord: "borrowing",
     headingTop: "TAKE",
     headingBottom: "THEM AWAY!",
+    xLabel: "Top number",
+    yLabel: "Bottom number",
+  },
+  mul: {
+    slug: "multiplication",
+    name: "Multiplication",
+    symbol: "×",
+    sheetNo: "05",
+    accent: "#9b4dff",
+    accentAlt: "#ff6fb5",
+    carryWord: "regrouping",
+    headingTop: "TIMES",
+    headingBottom: "THEM UP!",
     xLabel: "Top number",
     yLabel: "Bottom number",
   },

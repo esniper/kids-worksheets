@@ -6,7 +6,7 @@ import { useState } from "react";
 import { CarnivalHeading, Confetti, Sparkle, Star } from "@/components/carnival";
 import { Choice, OptionRow } from "@/components/config-controls";
 import { OP_META } from "@/components/arithmetic/op-meta";
-import type { CarryMode, DrillOp, Op } from "@/lib/arithmetic";
+import type { BigOp, CarryMode, DrillOp } from "@/lib/arithmetic";
 import {
   BIG_COUNTS,
   MIX_DRILL_COUNTS,
@@ -33,9 +33,10 @@ const DRILL_OPS: Array<{ op: DrillOp; label: string }> = [
   { op: "mul", label: "× Multiplication" },
 ];
 
-const BIG_OPS: Array<{ op: Op; label: string }> = [
+const BIG_OPS: Array<{ op: BigOp; label: string }> = [
   { op: "add", label: "✚ Addition" },
   { op: "sub", label: "− Subtraction" },
+  { op: "mul", label: "× Multiplication" },
 ];
 
 const TABLE_NUMBERS = Array.from(
@@ -53,7 +54,7 @@ export default function MixConfigView() {
   const [tableFrom, setTableFrom] = useState(2);
   const [tableTo, setTableTo] = useState(12);
 
-  const [bigOps, setBigOps] = useState<Op[]>(["add", "sub"]);
+  const [bigOps, setBigOps] = useState<BigOp[]>(["add", "sub"]);
   const [bigCount, setBigCount] = useState(20);
   const [addOpts, setAddOpts] = useState<BigOpState>({
     xDigits: 2,
@@ -65,12 +66,17 @@ export default function MixConfigView() {
     yDigits: 1,
     carry: "mix",
   });
+  const [mulOpts, setMulOpts] = useState<BigOpState>({
+    xDigits: 2,
+    yDigits: 1,
+    carry: "mix",
+  });
 
   const toggleDrillOp = (op: DrillOp) =>
     setDrillOps((prev) =>
       prev.includes(op) ? prev.filter((o) => o !== op) : [...prev, op],
     );
-  const toggleBigOp = (op: Op) =>
+  const toggleBigOp = (op: BigOp) =>
     setBigOps((prev) =>
       prev.includes(op) ? prev.filter((o) => o !== op) : [...prev, op],
     );
@@ -132,6 +138,11 @@ export default function MixConfigView() {
         params.set("sx", String(subOpts.xDigits));
         params.set("sy", String(subOpts.yDigits));
         params.set("sborrow", subOpts.carry);
+      }
+      if (bigOps.includes("mul")) {
+        params.set("mx", String(mulOpts.xDigits));
+        params.set("my", String(mulOpts.yDigits));
+        params.set("mregroup", mulOpts.carry);
       }
     }
     router.push(`/mix/worksheet?${params.toString()}`);
@@ -364,6 +375,51 @@ export default function MixConfigView() {
                         ? "No borrowing"
                         : mode === "yes"
                           ? "Borrowing"
+                          : "Mix"}
+                    </Choice>
+                  ))}
+                </OptionRow>
+              </OpOptions>
+            )}
+
+            {bigOps.includes("mul") && (
+              <OpOptions heading="Multiplication">
+                <OptionRow label={OP_META.mul.xLabel}>
+                  {[1, 2, 3, 4].map((d) => (
+                    <Choice
+                      key={d}
+                      selected={mulOpts.xDigits === d}
+                      onClick={() => setMulOpts((p) => ({ ...p, xDigits: d }))}
+                      color={OP_META.mul.accent}
+                    >
+                      {d} digit{d > 1 ? "s" : ""}
+                    </Choice>
+                  ))}
+                </OptionRow>
+                <OptionRow label={OP_META.mul.yLabel}>
+                  {[1, 2, 3, 4].map((d) => (
+                    <Choice
+                      key={d}
+                      selected={mulOpts.yDigits === d}
+                      onClick={() => setMulOpts((p) => ({ ...p, yDigits: d }))}
+                      color={OP_META.mul.accent}
+                    >
+                      {d} digit{d > 1 ? "s" : ""}
+                    </Choice>
+                  ))}
+                </OptionRow>
+                <OptionRow label="Regrouping" last>
+                  {(["no", "yes", "mix"] as const).map((mode) => (
+                    <Choice
+                      key={mode}
+                      selected={mulOpts.carry === mode}
+                      onClick={() => setMulOpts((p) => ({ ...p, carry: mode }))}
+                      color={OP_META.mul.accentAlt}
+                    >
+                      {mode === "no"
+                        ? "No regrouping"
+                        : mode === "yes"
+                          ? "Regrouping"
                           : "Mix"}
                     </Choice>
                   ))}
