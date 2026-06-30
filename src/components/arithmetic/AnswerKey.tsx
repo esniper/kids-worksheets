@@ -32,7 +32,13 @@ export function KeyToggle({
   );
 }
 
-export function AnswerKey({ sections }: { sections: KeySection[] }) {
+export function AnswerKey({
+  sections,
+  name,
+}: {
+  sections: KeySection[];
+  name?: string;
+}) {
   const total = sections.reduce((n, s) => n + s.entries.length, 0);
   if (total === 0) return null;
 
@@ -47,6 +53,11 @@ export function AnswerKey({ sections }: { sections: KeySection[] }) {
           style={{ fontFamily: "var(--font-bagel)" }}
         >
           Answer Key 🔑
+          {name && (
+            <span className="ml-3 text-base font-semibold normal-case tracking-normal text-ink-soft print:text-black">
+              {name}
+            </span>
+          )}
         </span>
         <span className="num-tag text-[10px] uppercase tracking-[0.22em] text-ink-soft print:text-black">
           for grading only

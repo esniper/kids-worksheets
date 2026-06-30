@@ -1,7 +1,9 @@
 // Shared printable-sheet chrome: the bordered header strip with title,
 // meta line, and fill-in fields (Name / Date / Score / times).
 
-export type SheetField = { label: string; suffix?: string };
+// A header field. With `value` set it prints filled in (e.g. a pre-set name);
+// otherwise it renders a blank line to write on.
+export type SheetField = { label: string; suffix?: string; value?: string };
 
 export function SheetHeader({
   tag,
@@ -40,7 +42,13 @@ export function SheetHeader({
               <span className="num-tag uppercase tracking-[0.18em] text-ink-soft print:text-black">
                 {field.label}
               </span>
-              <span className="flex-1 border-b border-ink/70 print:border-black" />
+              <span className="flex-1 border-b border-ink/70 print:border-black">
+                {field.value && (
+                  <span className="px-1 font-semibold text-ink print:text-black">
+                    {field.value}
+                  </span>
+                )}
+              </span>
               {field.suffix && (
                 <span className="num-tag text-ink-soft print:text-black">
                   {field.suffix}
