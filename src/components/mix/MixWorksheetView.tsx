@@ -8,6 +8,7 @@ import {
   KeyToggle,
   type KeySection,
 } from "@/components/arithmetic/AnswerKey";
+import { NameInput } from "@/components/arithmetic/NameInput";
 import { DrillGrid, StackedGrid } from "@/components/arithmetic/grids";
 import { SheetHeader, type SheetField } from "@/components/sheet";
 import {
@@ -33,6 +34,7 @@ export default function MixWorksheetView({
   // Fixed seed so SSR == first client render, then a fresh shuffle per visit.
   const [seed, setSeed] = useState<number>(1);
   const [showKey, setShowKey] = useState(false);
+  const [name, setName] = useState("");
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setSeed(Math.floor(Math.random() * 2 ** 31));
@@ -127,7 +129,7 @@ export default function MixWorksheetView({
   const sheetMeta = metaParts.join("  —  ");
 
   const fields: SheetField[] = [
-    { label: "Name" },
+    { label: "Name", value: name || undefined },
     { label: "Date" },
     ...(config.drill
       ? [{ label: "Start time" }, { label: "End time" }]
@@ -193,6 +195,7 @@ export default function MixWorksheetView({
               </div>
 
               <div className="flex items-center gap-3">
+                <NameInput value={name} onChange={setName} />
                 <KeyToggle on={showKey} onToggle={() => setShowKey((v) => !v)} />
                 <button
                   type="button"
@@ -267,7 +270,9 @@ export default function MixWorksheetView({
               </MixSection>
             )}
 
-            {showKey && <AnswerKey sections={keySections} />}
+            {showKey && (
+              <AnswerKey sections={keySections} name={name || undefined} />
+            )}
           </div>
         </article>
       </div>

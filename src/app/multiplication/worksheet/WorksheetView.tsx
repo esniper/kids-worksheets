@@ -7,6 +7,7 @@ import {
   KeyToggle,
   type KeySection,
 } from "@/components/arithmetic/AnswerKey";
+import { NameInput } from "@/components/arithmetic/NameInput";
 import { Sparkle as CarnivalSparkle, Star } from "@/components/carnival";
 import { SheetHeader } from "@/components/sheet";
 import { shuffle } from "@/lib/random";
@@ -42,6 +43,7 @@ export default function WorksheetView({
   // then swap to a random seed after mount so each visit gets a fresh shuffle.
   const [seed, setSeed] = useState<number>(1);
   const [showKey, setShowKey] = useState(false);
+  const [name, setName] = useState("");
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -177,6 +179,7 @@ export default function WorksheetView({
               </div>
 
               <div className="flex items-center gap-3">
+                <NameInput value={name} onChange={setName} />
                 <KeyToggle on={showKey} onToggle={() => setShowKey((v) => !v)} />
                 {random && (
                   <button
@@ -241,7 +244,7 @@ export default function WorksheetView({
               .map((s) => `${s.kind === "in-order" ? "In order" : "Random"}: ${s.label}`)
               .join("  ·  ")}
             fields={[
-              { label: "Name" },
+              { label: "Name", value: name || undefined },
               { label: "Date" },
               { label: "Score", suffix: `/ ${totalProblems}` },
             ]}
@@ -259,7 +262,7 @@ export default function WorksheetView({
             />
           ))}
 
-          {showKey && <AnswerKey sections={keySections} />}
+          {showKey && <AnswerKey sections={keySections} name={name || undefined} />}
           </div>
         </article>
       </div>

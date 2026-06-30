@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { Sparkle as CarnivalSparkle, Star } from "@/components/carnival";
 import { AnswerKey, KeyToggle } from "@/components/arithmetic/AnswerKey";
+import { NameInput } from "@/components/arithmetic/NameInput";
 import { DrillGrid, StackedGrid } from "@/components/arithmetic/grids";
 import { SheetHeader, type SheetField } from "@/components/sheet";
 import {
@@ -36,6 +37,7 @@ export default function ArithmeticWorksheetView({
   // Fixed seed so SSR == first client render, then a fresh shuffle per visit.
   const [seed, setSeed] = useState<number>(1);
   const [showKey, setShowKey] = useState(false);
+  const [name, setName] = useState("");
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setSeed(Math.floor(Math.random() * 2 ** 31));
@@ -92,14 +94,14 @@ export default function ArithmeticWorksheetView({
     : `${config.xDigits}-digit ${meta.symbol} ${config.yDigits}-digit · ${carryLabel(op, config.carry)} · ${config.count} problems`;
   const fields: SheetField[] = isDrill
     ? [
-        { label: "Name" },
+        { label: "Name", value: name || undefined },
         { label: "Date" },
         { label: "Start time" },
         { label: "End time" },
         { label: "Score", suffix: `/ ${problems.length}` },
       ]
     : [
-        { label: "Name" },
+        { label: "Name", value: name || undefined },
         { label: "Date" },
         { label: "Score", suffix: `/ ${problems.length}` },
       ];
@@ -162,6 +164,7 @@ export default function ArithmeticWorksheetView({
               </div>
 
               <div className="flex items-center gap-3">
+                <NameInput value={name} onChange={setName} />
                 <KeyToggle on={showKey} onToggle={() => setShowKey((v) => !v)} />
                 <button
                   type="button"
@@ -223,6 +226,7 @@ export default function ArithmeticWorksheetView({
 
             {showKey && (
               <AnswerKey
+                name={name || undefined}
                 sections={[
                   {
                     entries: problems.map((p, i) => ({
