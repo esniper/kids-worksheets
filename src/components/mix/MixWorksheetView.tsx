@@ -33,7 +33,7 @@ export default function MixWorksheetView({
 }) {
   // Fixed seed so SSR == first client render, then a fresh shuffle per visit.
   const [seed, setSeed] = useState<number>(1);
-  const [showKey, setShowKey] = useState(false);
+  const [showKey, setShowKey] = useState(true);
   const [name, setName] = useState("");
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect

@@ -42,7 +42,7 @@ export default function WorksheetView({
   // Seed only matters for random; default to a fixed value so SSR == first client render,
   // then swap to a random seed after mount so each visit gets a fresh shuffle.
   const [seed, setSeed] = useState<number>(1);
-  const [showKey, setShowKey] = useState(false);
+  const [showKey, setShowKey] = useState(true);
   const [name, setName] = useState("");
 
   useEffect(() => {
