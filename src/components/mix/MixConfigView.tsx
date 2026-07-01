@@ -54,7 +54,7 @@ export default function MixConfigView() {
   const [tableFrom, setTableFrom] = useState(2);
   const [tableTo, setTableTo] = useState(12);
 
-  const [bigOps, setBigOps] = useState<BigOp[]>(["add", "sub"]);
+  const [bigOps, setBigOps] = useState<BigOp[]>(["add", "sub", "mul"]);
   const [bigCount, setBigCount] = useState(20);
   const [addOpts, setAddOpts] = useState<BigOpState>({
     xDigits: 2,
